@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Set options:
+
+# Fail on a single failed command in a pipeline
+set -o pipefail
+
+# Fail on error and undefined vars (please don't use global vars, but
+# evaluation of functions for return values)
+set -eu
+
+# Save global script args
+ARGS=("$@")
