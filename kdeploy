@@ -5,9 +5,88 @@
 # Fail on a single failed command in a pipeline
 set -o pipefail
 
+# Save global script args
+if [ -z "$1" ]; then
+    ARGS=("--help")
+else
+    ARGS=("$@")
+fi
+
 # Fail on error and undefined vars (please don't use global vars, but
 # evaluation of functions for return values)
 set -eu
 
-# Save global script args
-ARGS=("$@")
+# Checks if a flag is present in the arguments.
+hasflag() {
+  local flags="$@"
+  for var in "${ARGS[@]}"; do
+    for flag in $flags; do
+      if [ "$var" = "$flag" ]; then
+        echo 'true'
+        return
+      fi
+    done
+  done
+  echo 'false'
+}
+
+# Read the value of an option.
+readopt() {
+  local opts="$@"
+  for var in "${ARGS[@]}"; do
+    for opt in $opts; do
+      if [[ "$var" = ${opt}* ]]; then
+        local value="${var//${opt}=/}"
+        if [ "$value" != "$var" ]; then
+          # Value could be extracted
+          echo $value
+          return
+        fi
+      fi
+    done
+  done
+  # Nothing found
+  echo ""
+}
+
+# Directory where this script is located
+basedir() {
+    # Default is current directory
+    local script=${BASH_SOURCE[0]}
+
+    # Resolve symbolic links
+    if [ -L $script ]; then
+        if readlink -f $script >/dev/null 2>&1; then
+            script=$(readlink -f $script)
+        elif readlink $script >/dev/null 2>&1; then
+            script=$(readlink $script)
+        elif realpath $script >/dev/null 2>&1; then
+            script=$(realpath $script)
+        else
+            echo "ERROR: Cannot resolve symbolic link $script"
+            exit 1
+        fi
+    fi
+
+    local dir=$(dirname "$script")
+    local full_dir=$(cd "${dir}" && pwd)
+    echo ${full_dir}
+}
+
+
+# ===========================================================
+
+if $(hasflag --help -h); then
+  cat << EOT
+Usage: kdeploy <subcommand> <opts>
+
+Kubernetes deployment helper
+
+Commands:
+
+Options:
+
+-h --help        Print help message
+EOT
+  exit 0
+fi
