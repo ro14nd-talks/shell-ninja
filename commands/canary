@@ -1,0 +1,5 @@
+#!/bin/bash
+
+function canary::run() {
+  echo Running a canary deployment
+}

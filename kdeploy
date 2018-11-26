@@ -73,20 +73,52 @@ basedir() {
     echo ${full_dir}
 }
 
+# Main loop
+run() {
+    local first_arg=${1:-}
+    local cmd_dir="$(basedir)/commands"
+    local command
+    if [ -n "${first_arg}" ] && [[ ${first_arg} != -* ]]; then
+        command="$first_arg"
+        if [ ! -f "$cmd_dir/$command" ]; then
+            echo
+            echo ">>>> Unknown command '$command'"
+            echo
+            display_help
+            exit 1
+        fi
+    fi
 
-# ===========================================================
+    if [ "${command:-}" == "help" ] || $(hasflag --help -h); then
+        display_help ${command:-}
+        exit 0
+    fi
 
-if $(hasflag --help -h); then
+    source "$cmd_dir/$command"
+
+    eval "${command}::run"
+}
+
+display_help() {
   cat << EOT
 Usage: kdeploy <subcommand> <opts>
 
 Kubernetes deployment helper
 
 Commands:
+  help -- Print this help command
 
 Options:
 
 -h --help        Print help message
 EOT
-  exit 0
+}
+
+# ===========================================================
+
+if $(hasflag --verbose -v); then
+    export PS4='+($(basename ${BASH_SOURCE[0]}):${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -x
 fi
+
+run "$@"
