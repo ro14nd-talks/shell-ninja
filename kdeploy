@@ -100,17 +100,41 @@ run() {
 }
 
 display_help() {
-  cat << EOT
+  local command=${1:-}
+  local cmd_dir="$(basedir)/commands"
+
+  if [ -z "${command}" ]; then
+    cat << EOT
 Usage: kdeploy <subcommand> <opts>
 
 Kubernetes deployment helper
 
 Commands:
-  help -- Print this help command
+EOT
+    for cmd in $(ls $cmd_dir); do
+      if [ -f $cmd_dir/$cmd ]; then
+        source $cmd_dir/$cmd
+        printf "   %-15s  %s\n" $cmd "$($cmd::description)"
+      fi
+    done
+    printf "   %-15s  %s\n" "help" "Print this help message"
+  else
+    source $cmd_dir/$command
+    cat <<EOT
+$($command::description)
 
-Options:
+Usage: kdeploy $command [... options ...]
 
--h --help        Print help message
+EOT
+    echo "Options for $command:"
+    echo -e "$($command::usage)"
+  fi
+
+  cat <<EOT
+
+Global Options:
+
+  -h --help                 Print this help message
 EOT
 }
 

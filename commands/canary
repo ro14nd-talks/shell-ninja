@@ -1,5 +1,20 @@
 #!/bin/bash
 
 function canary::run() {
-  echo Running a canary deployment
+  echo "Running a canary deployment"
+}
+
+function canary::description() {
+  echo "Deploy a canary version of the application"
+}
+
+function canary::usage() {
+  cat <<EOT
+  -d --deployment <name>    Name of eployment for which to perform a canary release (mandatory)
+  -i --image <image>        Full image name of the target version, including tag (mandatory)
+  -r --replicas <replicas>  Replicas of the *full* deployment (default is to take over the existing
+                            replicas
+     --ratio <percentage>   How many canaries to run, relative to the absolute number (Default: 5%).
+                            At least 1 canary is started though.
+EOT
 }
