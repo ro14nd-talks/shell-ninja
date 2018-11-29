@@ -10,7 +10,7 @@ function canary::description() {
 
 function canary::usage() {
   cat <<EOT
-  -d --deployment <name>    Name of eployment for which to perform a canary release (mandatory)
+  -d --deployment <name>    Name of deployment for which to perform a canary release (mandatory)
   -i --image <image>        Full image name of the target version, including tag (mandatory)
   -r --replicas <replicas>  Replicas of the *full* deployment (default is to take over the existing
                             replicas
