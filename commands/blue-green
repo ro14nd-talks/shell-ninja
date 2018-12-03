@@ -1,14 +1,14 @@
 #!/bin/bash
 
-function blue-green::run() {
+blue-green::run() {
   echo "Running a blue-green deployment"
 }
 
-function blue-green::description() {
+blue-green::description() {
   echo "Deploy with a blue-green strategy"
 }
 
-function blue-green::usage() {
+blue-green::usage() {
   cat <<EOT
   -d --deployment <name>    Name of deployment for which to perform a blue-green deployment (mandatory)
   -i --image <image>        Full image name of the target version, including tag (mandatory)

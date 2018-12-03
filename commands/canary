@@ -1,14 +1,37 @@
 #!/bin/bash
 
-function canary::run() {
+canary::run() {
   echo "Running a canary deployment"
+
+  local deployment=$(readopt -d --deployment)
+  if [ -z "${deployment}" ]; then
+    echo "ERROR: canary - No deployment provided with --deployment"
+    exit 1
+  fi
+
+  local image=$(readopt -i --image)
+  if [ -z "${image}" ]; then
+    echo "ERROR: canarr - No new image given --image"
+    exit 1
+  fi
+
+  local old_deploy=$(get_deployment "$deployment")
+  check_error $old_deploy
+
+  local new_deploy=$(new_canary_deployment "$old_deploy" "$image")
+  check_error $new_deploy
+
+  local result=$(apply "$new_deploy")
+  check_error $result
+
+  echo "=== Successfully deployed canary $image for $deployment"
 }
 
-function canary::description() {
+canary::description() {
   echo "Deploy a canary version of the application"
 }
 
-function canary::usage() {
+canary::usage() {
   cat <<EOT
   -d --deployment <name>    Name of deployment for which to perform a canary release (mandatory)
   -i --image <image>        Full image name of the target version, including tag (mandatory)
@@ -17,4 +40,33 @@ function canary::usage() {
      --ratio <percentage>   How many canaries to run, relative to the absolute number (Default: 5%).
                             At least 1 canary is started though.
 EOT
+}
+
+# ============================================================
+
+# Get the current deployment
+get_deployment() {
+  local deployment=${1}
+
+  #kubectl get deployment "${deployment}" -o yaml
+}
+
+# Take a deployment yaml and replace the image with the new one
+new_canary_deployment() {
+  local deployment=${1}
+  local new_image=${2}
+
+
+}
+
+apply() {
+  echo "Apply"
+}
+
+check_error() {
+  local msg="$*"
+  if [ "${msg//ERROR/}" != "${msg}" ]; then
+    echo "${msg}"
+    exit 1
+  fi
 }
