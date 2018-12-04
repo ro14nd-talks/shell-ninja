@@ -5,7 +5,7 @@ It's whole purpose is to demonstrate the convention that we are using in our bui
 
 * Return values other than plain return codes
 * Error handling
-* Integration tests (run `bats test` for starting them)
+* Integration tests with [bats](https://github.com/bats-core/bats-core) (run `bats test` for starting them)
 * Debugging
 * Modularization
 * Option parsing (but should be better done by getopts really)
