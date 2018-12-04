@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Runn a canary deployment by creating a second Deployment for the
+# new image and adjusting the number of replicas accordingly.
 canary::run() {
   echo "Running a canary deployment"
 
@@ -15,22 +17,27 @@ canary::run() {
     exit 1
   fi
 
+  # Fetch old deployment and check error
   local old_deploy=$(get_deployment "$deployment")
   check_error $old_deploy
 
+  # Create a new deployment descriptor
   local new_deploy=$(new_canary_deployment "$old_deploy" "$image")
   check_error $new_deploy
 
+  # Apply deployment descriptor
   local result=$(apply "$new_deploy")
   check_error $result
 
   echo "=== Successfully deployed canary $image for $deployment"
 }
 
+# Description (used in "-h")
 canary::description() {
   echo "Deploy a canary version of the application"
 }
 
+# Specific usage of this script
 canary::usage() {
   cat <<EOT
   -d --deployment <name>    Name of deployment for which to perform a canary release (mandatory)
@@ -48,6 +55,7 @@ EOT
 get_deployment() {
   local deployment=${1}
 
+  # TODO, e.g.
   #kubectl get deployment "${deployment}" -o yaml
 }
 
@@ -56,17 +64,11 @@ new_canary_deployment() {
   local deployment=${1}
   local new_image=${2}
 
-
+  # TODO: Use sed or something else to update the given deployment
 }
 
 apply() {
-  echo "Apply"
-}
-
-check_error() {
-  local msg="$*"
-  if [ "${msg//ERROR/}" != "${msg}" ]; then
-    echo "${msg}"
-    exit 1
-  fi
+  local deployment=${1}
+  # TODO: Use kubctl to add this deployment
+  echo "Applied new deployment for canary release"
 }

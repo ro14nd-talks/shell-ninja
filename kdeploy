@@ -6,90 +6,33 @@
 set -o pipefail
 
 # Save global script args
-if [ -z "$1" ]; then
-    ARGS=("--help")
-else
-    ARGS=("$@")
-fi
+ARGS="$@"
 
 # Fail on error and undefined vars (please don't use global vars, but
 # evaluation of functions for return values)
 set -eu
 
-# Checks if a flag is present in the arguments.
-hasflag() {
-  local flags="$@"
-  for var in "${ARGS[@]}"; do
-    for flag in $flags; do
-      if [ "$var" = "$flag" ]; then
-        echo 'true'
-        return
-      fi
-    done
-  done
-  echo 'false'
-}
-
-# Read the value of an option.
-readopt() {
-  local opts="$@"
-  for var in "${ARGS[@]}"; do
-    for opt in $opts; do
-      if [[ "$var" = ${opt}* ]]; then
-        local value="${var//${opt}=/}"
-        if [ "$value" != "$var" ]; then
-          # Value could be extracted
-          echo $value
-          return
-        fi
-      fi
-    done
-  done
-  # Nothing found
-  echo ""
-}
-
-# Directory where this script is located
-basedir() {
-    # Default is current directory
-    local script=${BASH_SOURCE[0]}
-
-    # Resolve symbolic links
-    if [ -L $script ]; then
-        if readlink -f $script >/dev/null 2>&1; then
-            script=$(readlink -f $script)
-        elif readlink $script >/dev/null 2>&1; then
-            script=$(readlink $script)
-        elif realpath $script >/dev/null 2>&1; then
-            script=$(realpath $script)
-        else
-            echo "ERROR: Cannot resolve symbolic link $script"
-            exit 1
-        fi
-    fi
-
-    local dir=$(dirname "$script")
-    local full_dir=$(cd "${dir}" && pwd)
-    echo ${full_dir}
-}
-
-# Main loop
+# Main loop evaluating sub commands
 run() {
     local first_arg=${1:-}
     local cmd_dir="$(basedir)/commands"
     local command
-    if [ -n "${first_arg}" ] && [[ ${first_arg} != -* ]]; then
-        command="$first_arg"
-        if [ ! -f "$cmd_dir/$command" ]; then
-            echo
-            echo ">>>> Unknown command '$command'"
-            echo
-            display_help
-            exit 1
-        fi
+    if [ -n "$first_arg" ] && [[ ${first_arg} != -* ]]; then
+      command="$first_arg"
+      if [ ! -f "$cmd_dir/$command" ]; then
+        echo
+        echo ">>>> Unknown command '$command'"
+        echo
+        display_help
+        exit 1
+      fi
+    else
+      command="help"
+      echo "No command given"
+      echo
     fi
 
-    if [ "${command:-}" == "help" ] || $(hasflag --help -h); then
+    if [ "${command}" = "help" ] || $(hasflag --help -h); then
         display_help ${command:-}
         exit 0
     fi
@@ -103,7 +46,7 @@ display_help() {
   local command=${1:-}
   local cmd_dir="$(basedir)/commands"
 
-  if [ -z "${command}" ]; then
+  if [ -z "${command}" ] || [ "$command" = "help" ]; then
     cat << EOT
 Usage: kdeploy <subcommand> <opts>
 
@@ -138,11 +81,39 @@ Global Options:
 EOT
 }
 
+# Directory where this script is located
+basedir() {
+    # Default is current directory
+    local script=${BASH_SOURCE[0]}
+
+    # Resolve symbolic links
+    if [ -L $script ]; then
+        if readlink -f $script >/dev/null 2>&1; then
+            script=$(readlink -f $script)
+        elif readlink $script >/dev/null 2>&1; then
+            script=$(readlink $script)
+        elif realpath $script >/dev/null 2>&1; then
+            script=$(realpath $script)
+        else
+            echo "ERROR: Cannot resolve symbolic link $script"
+            exit 1
+        fi
+    fi
+
+    local dir=$(dirname "$script")
+    local full_dir=$(cd "${dir}" && pwd)
+    echo ${full_dir}
+}
+
 # ===========================================================
+# Startup ...
+
+# Read in some helpers
+source $(basedir)/helpers.sh
 
 if $(hasflag --verbose -v); then
     export PS4='+($(basename ${BASH_SOURCE[0]}):${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
     set -x
 fi
 
-run "$@"
+run $ARGS
